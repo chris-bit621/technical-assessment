@@ -13,9 +13,11 @@ The app listens on port 8080. The starter has the synchronous HTTP client and th
 ## Task 1
 
 - Accepts both 24 hr format and case-insensitive AM/PM format in parameter of `timeOfDay`.
-- A deal is active when the restaurant is open and the deal's own window, if present, is active.
-- Prefer a complete deal `open`/`close` pair, then a complete `start`/`end` pair, then inherit restaurant hours.
-- Include the start and exclude the end. Cover overnight windows. Keep `restarantSuburb` and the string-valued deal fields in the response. Count entries independently of quantity and duplicate IDs.
+- A deal is active when the restaurant is open, the deal's own window (if present) is active, and its `qtyLeft` is greater than zero.
+- If a deal has `start/end` fields then they will be treated as the deals timings.
+- If a deal has 0 quantity, it will not be treated as an active deal.
+- Include the start and exclude the end. Cover overnight windows. 
+- Count each active entry once, even when entries share a deal ID.
 - Return HTTP 400 for missing or invalid input and HTTP 502 for upstream failure.
 
 ## Tests
@@ -23,5 +25,3 @@ The app listens on port 8080. The starter has the synchronous HTTP client and th
 ```powershell
 .\mvnw.cmd test
 ```
-
-The Task 1 tests use synthetic restaurants and a stubbed feed client. Several tests are expected to fail until the exercise is implemented. To verify that the starter compiles and packages before implementing the exercise, run `.\mvnw.cmd -DskipTests package`.

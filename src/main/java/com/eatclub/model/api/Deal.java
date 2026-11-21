@@ -2,7 +2,7 @@ package com.eatclub.model.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record DealResponse(
+public record Deal(
         String restaurantObjectId,
         String restaurantName,
         String restaurantAddress1,

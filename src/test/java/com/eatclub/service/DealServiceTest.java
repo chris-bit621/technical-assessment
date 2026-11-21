@@ -1,7 +1,7 @@
 package com.eatclub.service;
 
 import com.eatclub.exception.ChallengeDataException;
-import com.eatclub.model.api.DealResponse;
+import com.eatclub.model.api.Deal;
 import com.eatclub.model.source.ChallengeData;
 import com.eatclub.model.source.SourceDeal;
 import com.eatclub.model.source.SourceRestaurant;
@@ -9,18 +9,20 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.eatclub.time.TimeParser.parseTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DealServiceTest {
 
     @Test
-    void inheritsRestaurantHoursAndIncludesDealsWithZeroQtyLeft() {
-        var deal = new SourceDeal("original", "30", "true", "false", "0", null, null, null, null);
-        var service = service(restaurant("r1", "3:00pm", "9:00pm", deal));
+    void inheritsRestaurantHoursAndExcludesSoldOutDeals() {
+        var available = new SourceDeal("original", "30", "true", "false", "3", null, null, null, null);
+        var soldOut = new SourceDeal("sold-out", "30", "true", "false", "0", null, null, null, null);
+        var service = service(restaurant("r1", "3:00pm", "9:00pm", available, soldOut));
 
         assertThat(active(service, "14:59")).isEmpty();
-        assertThat(active(service, "15:00")).extracting(DealResponse::dealObjectId).containsExactly("original");
+        assertThat(active(service, "15:00")).extracting(Deal::dealObjectId).containsExactly("original");
         assertThat(active(service, "20:59")).hasSize(1);
         assertThat(active(service, "21:00")).isEmpty();
     }
@@ -34,9 +36,9 @@ class DealServiceTest {
         var service = service(restaurant("r1", "6:00pm", "10:00pm", byOpenClose, byStartEnd));
 
         assertThat(active(service, "17:59")).isEmpty();
-        assertThat(active(service, "18:00")).extracting(DealResponse::dealObjectId)
+        assertThat(active(service, "18:00")).extracting(Deal::dealObjectId)
                 .containsExactly("preferred", "fallback");
-        assertThat(active(service, "19:00")).extracting(DealResponse::dealObjectId).containsExactly("fallback");
+        assertThat(active(service, "19:00")).extracting(Deal::dealObjectId).containsExactly("fallback");
         assertThat(active(service, "20:00")).isEmpty();
     }
 
@@ -46,7 +48,7 @@ class DealServiceTest {
         var service = service(restaurant("r1", "6:00pm", "9:00pm", deal),
                 restaurant("r2", "5:00pm", "8:00pm", deal));
 
-        assertThat(active(service, "18:00")).extracting(DealResponse::restaurantObjectId)
+        assertThat(active(service, "18:00")).extracting(Deal::restaurantObjectId)
                 .containsExactly("r1", "r2");
     }
 
@@ -68,8 +70,8 @@ class DealServiceTest {
         assertThatThrownBy(() -> active(service, "18:00")).isInstanceOf(ChallengeDataException.class);
     }
 
-    private List<DealResponse> active(DealService service, String time) {
-        return service.activeDeals(time).deals();
+    private List<Deal> active(DealService service, String time) {
+        return service.activeDeals(parseTime(time)).deals();
     }
 
     private DealService service(SourceRestaurant... restaurants) {

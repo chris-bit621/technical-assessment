@@ -1,11 +1,17 @@
 package com.eatclub.controller;
 
+import com.eatclub.exception.ChallengeDataException;
 import com.eatclub.model.api.DealsResponse;
 import com.eatclub.service.DealService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+
+import static com.eatclub.time.TimeParser.parseTime;
 
 @RestController
 @RequestMapping("/deals")
@@ -19,7 +25,19 @@ public class DealController {
 
     @GetMapping
     public DealsResponse activeDeals(@RequestParam String timeOfDay) {
-        // TODO: Return HTTP 400 for invalid times and 502 for upstream failures.
-        return dealService.activeDeals(timeOfDay);
+        LocalTime requestedTime = parseTime(timeOfDay);
+        return dealService.activeDeals(requestedTime);
+    }
+
+    @ExceptionHandler(DateTimeParseException.class)
+    public ProblemDetail handleInvalidTimeOfDay() {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST, "Invalid timeOfDay");
+    }
+
+    @ExceptionHandler(ChallengeDataException.class)
+    public ProblemDetail handleUpstreamFailure() {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY, "Restaurant deal data is currently unavailable.");
     }
 }
