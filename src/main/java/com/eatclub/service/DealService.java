@@ -4,6 +4,7 @@ import com.eatclub.client.ChallengeDataClient;
 import com.eatclub.exception.ChallengeDataException;
 import com.eatclub.model.api.Deal;
 import com.eatclub.model.api.DealsResponse;
+import com.eatclub.model.api.PeakTimeResponse;
 import com.eatclub.model.source.SourceDeal;
 import com.eatclub.model.source.SourceRestaurant;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,12 @@ public class DealService {
         });
 
         return new DealsResponse(dealsResponse.toList());
+    }
+
+    public PeakTimeResponse peakTime() {
+
+
+        return new PeakTimeResponse(null, null);
     }
 
     private boolean isActiveDeal(SourceDeal deal, LocalTime requestedTime) {

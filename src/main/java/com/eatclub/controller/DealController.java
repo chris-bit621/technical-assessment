@@ -2,6 +2,7 @@ package com.eatclub.controller;
 
 import com.eatclub.exception.ChallengeDataException;
 import com.eatclub.model.api.DealsResponse;
+import com.eatclub.model.api.PeakTimeResponse;
 import com.eatclub.service.DealService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -27,6 +28,11 @@ public class DealController {
     public DealsResponse activeDeals(@RequestParam String timeOfDay) {
         LocalTime requestedTime = parseTime(timeOfDay);
         return dealService.activeDeals(requestedTime);
+    }
+
+    @GetMapping("/peak")
+    public PeakTimeResponse peakTime() {
+        return dealService.peakTime();
     }
 
     @ExceptionHandler(DateTimeParseException.class)
