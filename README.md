@@ -1,8 +1,17 @@
 # EatClub Technical Solution
 
-Java 21 Maven starter for implementing the EatClub take-home. Open this folder's `pom.xml` as a Maven project in IntelliJ.
+Java 21 Spring Boot implementation of the EatClub take-home. Open this folder's `pom.xml` as a Maven project in IntelliJ.
 
 ## Run locally
+
+macOS and Linux
+
+```bash
+chmod +x ./mvnw
+./mvnw spring-boot:run
+```
+
+Windows PowerShell
 
 ```powershell
 .\mvnw.cmd spring-boot:run
@@ -27,12 +36,32 @@ The app listens on port 8080. It exposes `GET /deals?timeOfDay=15:00` and `GET /
 - A peak that continues through midnight is one window, e.g 23:00 - 01:59
 - A deal follows same availability rules as in task 1.
 
+## Live feed verification
+
+I ran the application against the EatClub feed and checked these requests on 22 November 2026.
+
+| Request | Result |
+| --- | --- |
+| `GET /deals?timeOfDay=3:00pm` | 5 deals |
+| `GET /deals?timeOfDay=6:00pm` | 9 deals |
+| `GET /deals?timeOfDay=9:00pm` | 4 deals |
+| `GET /deals/peak` | `18:00–20:59` inclusive |
+
+The peak ends at `20:59` because that is the last minute at the maximum count. The count drops at `21:00`.
 
 ## Task 3
 
 [MongoDB schema design](TASK-3.md)
 
 ## Tests
+
+macOS and Linux
+
+```bash
+./mvnw test
+```
+
+Windows PowerShell
 
 ```powershell
 .\mvnw.cmd test
