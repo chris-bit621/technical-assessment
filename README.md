@@ -8,7 +8,7 @@ Java 21 Maven starter for implementing the EatClub take-home. Open this folder's
 .\mvnw.cmd spring-boot:run
 ```
 
-The app listens on port 8080. The starter has the synchronous HTTP client and the source and API records. The controller exposes `GET /deals?timeOfDay=15:00`. The service currently returns an empty deals array as a placeholder.
+The app listens on port 8080. It exposes `GET /deals?timeOfDay=15:00` and `GET /deals/peak`.
 
 ## Task 1
 
@@ -27,6 +27,10 @@ The app listens on port 8080. The starter has the synchronous HTTP client and th
 - A peak that continues through midnight is one window, e.g 23:00 - 01:59
 - A deal follows same availability rules as in task 1.
 
+
+## Task 3
+
+[MongoDB schema design](TASK-3.md)
 
 ## Tests
 
