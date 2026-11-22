@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.eatclub.time.TimeParser.parseTime;
@@ -30,35 +29,16 @@ public class DealService {
     }
 
     public DealsResponse activeDeals(LocalTime requestedTime) {
-
         var restaurants = dataClient.fetch().restaurants().stream();
 
         var dealsResponse = restaurants.flatMap(restaurant -> {
-            if (restaurant == null || restaurant.deals() == null) {
-                throw new ChallengeDataException("Data is missing restaurant details");
-            }
-
-            if (!hasTime(restaurant.open()) || !hasTime(restaurant.close())) {
-                throw new ChallengeDataException("Missing restaurant opening or closing time");
-            }
-
-            LocalTime open;
-            LocalTime close;
-            try {
-                open = parseTime(restaurant.open());
-                close = parseTime(restaurant.close());
-            } catch (DateTimeParseException e) {
-                throw new ChallengeDataException("Invalid restaurant opening or closing time", e);
-            }
-            //If the deals list is empty and the restaurants time is badly formatted , it would never throw the exception
-            //when it was in the activeDeal check.
-            if (!isWithinTimeWindow(requestedTime, open, close)) {
+            if (!isRestaurantOpenAt(restaurant, requestedTime)) {
                 return Stream.empty();
             }
 
             return restaurant.deals().stream()
                     .filter(deal -> isActiveDeal(deal, requestedTime))
-                    .map(sourceDeal -> toDealResponse(restaurant, sourceDeal) );
+                    .map(sourceDeal -> toDealResponse(restaurant, sourceDeal));
         });
 
         return new DealsResponse(dealsResponse.toList());
@@ -69,7 +49,7 @@ public class DealService {
         int[] dealsCount = new int[MINUTES_IN_DAY];
 
         for (int minute = 0; minute < MINUTES_IN_DAY; minute++) {
-            LocalTime requestedTime = LocalTime.of(minute / MINUTES_IN_HOUR, minute % MINUTES_IN_HOUR);
+            LocalTime requestedTime = timeAtMinute(minute);
             dealsCount[minute] = countActiveDealsAt(restaurants, requestedTime);
         }
 
@@ -109,9 +89,31 @@ public class DealService {
             }
         }
 
-        LocalTime start = LocalTime.of(peakStart / MINUTES_IN_HOUR, peakStart % MINUTES_IN_HOUR);
-        LocalTime end = LocalTime.of(peakEnd / MINUTES_IN_HOUR, peakEnd % MINUTES_IN_HOUR);
+        LocalTime start = timeAtMinute(peakStart);
+        LocalTime end = timeAtMinute(peakEnd);
         return new PeakTimeResponse(start.toString(), end.toString());
+    }
+
+    private LocalTime timeAtMinute(int minute) {
+        return LocalTime.of(minute / MINUTES_IN_HOUR, minute % MINUTES_IN_HOUR);
+    }
+
+    private boolean isRestaurantOpenAt(SourceRestaurant restaurant, LocalTime requestedTime) {
+        if (restaurant == null || restaurant.deals() == null) {
+            throw new ChallengeDataException("Data is missing restaurant details");
+        }
+
+        if (!hasTime(restaurant.open()) || !hasTime(restaurant.close())) {
+            throw new ChallengeDataException("Missing restaurant opening or closing time");
+        }
+
+        try {
+            LocalTime open = parseTime(restaurant.open());
+            LocalTime close = parseTime(restaurant.close());
+            return isWithinTimeWindow(requestedTime, open, close);
+        } catch (DateTimeParseException e) {
+            throw new ChallengeDataException("Invalid restaurant opening or closing time", e);
+        }
     }
 
     private boolean isActiveDeal(SourceDeal deal, LocalTime requestedTime) {
@@ -170,29 +172,18 @@ public class DealService {
         int count = 0;
 
         for (SourceRestaurant restaurant : restaurants) {
-            if (restaurant == null || restaurant.deals() == null) {
-                throw new ChallengeDataException("Data is missing restaurant details");
-            }
-
-            if (!hasTime(restaurant.open()) || !hasTime(restaurant.close())) {
-                throw new ChallengeDataException("Missing restaurant opening or closing time");
+            if (!isRestaurantOpenAt(restaurant, requestedTime)) {
+                continue;
             }
 
             try {
-                LocalTime open = parseTime(restaurant.open());
-                LocalTime close = parseTime(restaurant.close());
-
-                if (!isWithinTimeWindow(requestedTime, open, close)) {
-                    continue;
-                }
-
                 for (SourceDeal deal : restaurant.deals()) {
                     if (isActiveDeal(deal, requestedTime)) {
                         count++;
                     }
                 }
             } catch (DateTimeParseException e) {
-                throw new ChallengeDataException("Invalid restaurant or deal hours", e);
+                throw new ChallengeDataException("Invalid deal hours", e);
             }
         }
 
