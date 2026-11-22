@@ -37,7 +37,7 @@ class PeakTimeControllerTest {
                 restaurant("r2", "12:00pm", "3:00pm", deal("b")),
                 restaurant("r3", "1:00pm", "4:00pm", deal("c")));
 
-        expectPeak("13:00", "14:00");
+        expectPeak("13:00", "13:59");
     }
 
     @Test
@@ -47,7 +47,7 @@ class PeakTimeControllerTest {
                 restaurant("r2", "7:00pm", "8:00pm", deal("b")),
                 restaurant("r3", "8:00pm", "9:00pm", deal("c")));
 
-        expectPeak("19:00", "21:00");
+        expectPeak("19:00", "20:59");
     }
 
     @Test
@@ -56,7 +56,7 @@ class PeakTimeControllerTest {
                 restaurant("later", "6:00pm", "9:00pm", deal("a")),
                 restaurant("earlier", "10:00am", "11:00am", deal("b")));
 
-        expectPeak("10:00", "11:00");
+        expectPeak("10:00", "10:59");
     }
 
     @Test
@@ -65,7 +65,7 @@ class PeakTimeControllerTest {
                 "3:00pm", "10:00pm", null, null);
         givenRestaurants(restaurant("r1", "6:00pm", "9:00pm", deal));
 
-        expectPeak("18:00", "21:00");
+        expectPeak("18:00", "20:59");
     }
 
     @Test
@@ -74,7 +74,7 @@ class PeakTimeControllerTest {
                 null, null, "11:00pm", "3:00am");
         givenRestaurants(restaurant("r1", "10:00pm", "2:00am", deal));
 
-        expectPeak("23:00", "02:00");
+        expectPeak("23:00", "01:59");
     }
 
     @Test
@@ -83,7 +83,7 @@ class PeakTimeControllerTest {
                 null, null, "7:00pm", "8:00pm");
         givenRestaurants(restaurant("r1", "6:00pm", "9:00pm", deal("available"), soldOut));
 
-        expectPeak("18:00", "21:00");
+        expectPeak("18:00", "20:59");
     }
 
     @Test
@@ -93,7 +93,16 @@ class PeakTimeControllerTest {
                 restaurant("r1", "6:00pm", "9:00pm", deal("shared")),
                 restaurant("r2", "6:00pm", "9:00pm", deal("shared")));
 
-        expectPeak("18:00", "21:00");
+        expectPeak("18:00", "20:59");
+    }
+
+    @Test
+    void reportsTheLastMinuteOfTheDayForAFullDayPeak() throws Exception {
+        givenRestaurants(
+                restaurant("morning", "12:00am", "12:00pm", deal("a")),
+                restaurant("afternoon", "12:00pm", "12:00am", deal("b")));
+
+        expectPeak("00:00", "23:59");
     }
 
     @Test
@@ -107,12 +116,12 @@ class PeakTimeControllerTest {
                         """, JsonCompareMode.STRICT));
     }
 
-    private void expectPeak(String start, String end) throws Exception {
+    private void expectPeak(String firstPeakMinute, String lastPeakMinute) throws Exception {
         mvc.perform(get("/deals/peak"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("""
                         {"peakTimeStart": "%s", "peakTimeEnd": "%s"}
-                        """.formatted(start, end), JsonCompareMode.STRICT));
+                        """.formatted(firstPeakMinute, lastPeakMinute), JsonCompareMode.STRICT));
     }
 
     private void givenRestaurants(SourceRestaurant... restaurants) {

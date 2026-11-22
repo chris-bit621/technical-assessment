@@ -20,6 +20,14 @@ The app listens on port 8080. The starter has the synchronous HTTP client and th
 - Count each active entry once, even when entries share a deal ID.
 - Return HTTP 400 for missing or invalid input and HTTP 502 for upstream failure.
 
+
+## Task 2
+- Returns the start and end of the peak period (inclusive of both)
+- Returns the earliest start peak of the window.
+- A peak that continues through midnight is one window, e.g 23:00 - 01:59
+- A deal follows same availability rules as in task 1.
+
+
 ## Tests
 
 ```powershell
